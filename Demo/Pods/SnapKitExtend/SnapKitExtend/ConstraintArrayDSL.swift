@@ -27,7 +27,7 @@
 
 import SnapKit
 
-public enum ConstraintAxis : Int {
+public enum ConstraintAxis: Int {
     case horizontal
     case vertical
 }
@@ -86,14 +86,14 @@ public struct ConstraintArrayDSL {
     ///   - fixedSpacing: the spacing between each item
     ///   - leadSpacing: the spacing before the first item and the container
     ///   - tailSpacing: the spacing after the last item and the container
-    public func distributeViewsAlong(axisType:ConstraintAxis, fixedSpacing:CGFloat = 0, leadSpacing:CGFloat = 0, tailSpacing:CGFloat = 0) {
+    public func distributeViewsAlong(axisType: ConstraintAxis, fixedSpacing: CGFloat = 0, leadSpacing: CGFloat = 0, tailSpacing: CGFloat = 0) {
         
         guard self.array.count > 1, let tempSuperView = commonSuperviewOfViews() else {
             return
         }
         
         if axisType == .horizontal {
-            var prev : ConstraintView?
+            var prev: ConstraintView?
             for (i, v) in self.array.enumerated() {
                 v.snp.makeConstraints({ (make) in
                     guard let prev = prev else {//first one
@@ -109,7 +109,7 @@ public struct ConstraintArrayDSL {
                 prev = v;
             }
         }else {
-            var prev : ConstraintView?
+            var prev: ConstraintView?
             for (i, v) in self.array.enumerated() {
                 v.snp.makeConstraints({ (make) in
                     guard let prev = prev else {//first one
@@ -134,7 +134,7 @@ public struct ConstraintArrayDSL {
     ///   - fixedItemLength: the fixed length of each item
     ///   - leadSpacing: the spacing before the first item and the container
     ///   - tailSpacing: the spacing after the last item and the container
-    public func distributeViewsAlong(axisType:ConstraintAxis, fixedItemLength:CGFloat = 0, leadSpacing:CGFloat = 0, tailSpacing:CGFloat = 0) {
+    public func distributeViewsAlong(axisType: ConstraintAxis, fixedItemLength: CGFloat = 0, leadSpacing: CGFloat = 0, tailSpacing: CGFloat = 0) {
         
         guard self.array.count > 1, let tempSuperView = commonSuperviewOfViews() else {
             return
@@ -261,7 +261,7 @@ public struct ConstraintArrayDSL {
         let columnCount = warpCount
         
         
-        var prev : ConstraintView?
+        var prev: ConstraintView?
         
         for (i,v) in self.array.enumerated() {
             
@@ -275,27 +275,132 @@ public struct ConstraintArrayDSL {
                     return
                 }
                 make.width.height.equalTo(prev)
+                //最后一行
                 if currentRow == rowCount - 1 {//last row
                     if currentRow != 0 && i - columnCount >= 0 {//just one row
                         make.top.equalTo(self.array[i-columnCount].snp.bottom).offset(fixedLineSpacing)
                     }
                     make.bottom.equalTo(tempSuperView).offset(-edgeInset.bottom)
                 }
-                
+                //中间行
                 if currentRow != 0 && currentRow != rowCount - 1 {//other row
                     make.top.equalTo(self.array[i-columnCount].snp.bottom).offset(fixedLineSpacing);
                 }
+                //最后一列
                 if currentColumn == warpCount - 1 {//last col
                     if currentColumn != 0 {//just one line
                         make.left.equalTo(prev.snp.right).offset(fixedInteritemSpacing)
                     }
                     make.right.equalTo(tempSuperView).offset(-edgeInset.right)
                 }
-                
+                //中间列
                 if currentColumn != 0 && currentColumn != warpCount - 1 {//other col
                     make.left.equalTo(prev.snp.right).offset(fixedInteritemSpacing);
                 }
+                
+                if currentRow == 0 {
+                    make.top.equalTo(tempSuperView).offset(edgeInset.top);
+                }
+                
+                if currentColumn == 0 {
+                    make.left.equalTo(tempSuperView).offset(edgeInset.left);
+                }
             })
+            prev = v
+        }
+    }
+    
+    public func distributeSudokuViewsReverse(fixedLineSpacing: CGFloat, fixedInteritemSpacing: CGFloat, warpCount: Int, edgeInset: ConstraintEdgeInsets = .zero) {
+        
+        guard self.array.count > 1, warpCount >= 1, let tempSuperView = commonSuperviewOfViews() else {
+            return
+        }
+        
+        let remainder = self.array.count % warpCount
+        let quotient = self.array.count / warpCount
+        
+        let rowCount = (remainder == 0) ? quotient : (quotient + 1)
+        
+        var prev: ConstraintView?
+        
+        for (i,v) in self.array.enumerated() {
+            
+            let currentRow = i / warpCount
+            let currentColumn = i % warpCount
+            
+            v.snp.makeConstraints({ (make) in
+                guard let prev = prev else {//first row & first col
+                    make.top.equalTo(tempSuperView).offset(edgeInset.top)
+                    make.right.equalTo(tempSuperView).offset(-edgeInset.right)
+                    return
+                }
+                make.width.height.equalTo(prev)
+                if currentRow == rowCount - 1 {//last row
+                    if currentRow != 0 && i - warpCount >= 0 {//just one row
+                        make.top.equalTo(self.array[i-warpCount].snp.bottom).offset(fixedLineSpacing)
+                    }
+                    make.bottom.equalTo(tempSuperView).offset(-edgeInset.bottom)
+                }
+                
+                if currentRow != 0 && currentRow != rowCount - 1 {//other row
+                    make.top.equalTo(self.array[i-warpCount].snp.bottom).offset(fixedLineSpacing);
+                }
+                if currentColumn == warpCount - 1 {//last col
+                    if currentColumn != 0 {//just one line
+                        make.right.equalTo(prev.snp.left).offset(-fixedInteritemSpacing)
+                    }
+                    make.left.equalTo(tempSuperView).offset(edgeInset.left)
+                }
+                
+                if currentColumn != 0 && currentColumn != warpCount - 1 {//other col
+                    make.right.equalTo(prev.snp.left).offset(-fixedInteritemSpacing);
+                }
+                
+                if currentRow == 0 {
+                    make.top.equalTo(tempSuperView).offset(edgeInset.top);
+                }
+                
+                if currentRow == rowCount - 1 {
+                    make.right.equalTo(tempSuperView).offset(-edgeInset.right)
+                }
+            })
+            prev = v
+        }
+    }
+    ///distribute line with flexible width item spacing
+    public func distributeViewsHorizontal(fixedSpacing: CGFloat, leadSpacing: CGFloat, tailSpacing: CGFloat, isReverse: Bool) {
+
+        guard self.array.count > 1 else {
+            if array.count == 1 {
+                array[0].snp.makeConstraints { (make) in
+                    make.left.equalToSuperview().offset(leadSpacing);
+                    make.right.equalToSuperview().offset(-tailSpacing);
+                }
+            }
+            return
+        }
+
+        let list = isReverse == false ? array : array.reversed()
+
+        var prev: ConstraintView?
+        for (_, v) in list.enumerated() {
+            v.snp.remakeConstraints { (make) in
+                make.centerY.equalToSuperview()
+
+                if isReverse == false {
+                    if prev == nil {
+                         make.left.equalToSuperview().offset(leadSpacing)
+                     } else {
+                         make.left.equalTo(prev!.snp.right).offset(fixedSpacing)
+                     }
+                } else {
+                    if prev == nil {
+                        make.right.equalToSuperview().offset(-tailSpacing)
+                    } else {
+                        make.right.equalTo(prev!.snp.left).offset(-fixedSpacing)
+                    }
+                }
+            }
             prev = v
         }
     }
