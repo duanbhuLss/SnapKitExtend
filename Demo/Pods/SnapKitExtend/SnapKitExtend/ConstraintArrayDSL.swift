@@ -405,6 +405,30 @@ public struct ConstraintArrayDSL {
         }
     }
     
+    public func distributeViewsVertical(top: CGFloat = 0, leading: CGFloat = 0, fixedSpacing: CGFloat, width: CGFloat? = nil, height: CGFloat, isAutoAdaptSuperview: Bool = false, insetsBottom: CGFloat = 0) {
+        var prev: UIView? = nil
+        for view in array {
+            view.snp.makeConstraints { make in
+                make.leading.equalTo(leading)
+                if let width = width {
+                    make.width.equalTo(width)
+                } else {
+                    make.centerX.equalToSuperview()
+                }
+                make.height.equalTo(height)
+                guard let prev = prev else {
+                    make.top.equalTo(top)
+                    return
+                }
+                make.top.equalTo(prev.snp.bottom).offset(fixedSpacing)
+            }
+        }
+        guard let prev = prev, isAutoAdaptSuperview else { return }
+        prev.snp.makeConstraints { make in
+            make.bottom.equalToSuperview().offset(-insetsBottom)
+        }
+    }
+    
     internal let array: Array<ConstraintView>
     
     internal init(array: Array<ConstraintView>) {
