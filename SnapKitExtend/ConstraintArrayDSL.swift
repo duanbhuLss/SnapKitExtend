@@ -422,6 +422,7 @@ public struct ConstraintArrayDSL {
                 }
                 make.top.equalTo(prev.snp.bottom).offset(fixedSpacing)
             }
+            prev = view
         }
         guard let prev = prev, isAutoAdaptSuperview else { return }
         prev.snp.makeConstraints { make in
